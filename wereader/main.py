@@ -20,8 +20,8 @@
 """
 
 from wereader import *
-from wereader import level1,level2,level3,style1,style2,style3
-from wereader import USERVID,headers,headers_p,thought_style,way_to_append,comment_mode
+from wereader.wereader import level1, level2, level3, style1, style2, style3
+from wereader.wereader import USERVID, headers, headers_p, thought_style, way_to_append, comment_mode
 import sys
 import os
 import time
