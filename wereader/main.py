@@ -19,32 +19,34 @@
 8. 直接输出书架中的书√
 """
 
-from wereader import *
-from wereader.wereader import level1, level2, level3, style1, style2, style3
-from wereader.wereader import USERVID, headers, headers_p, thought_style, way_to_append, comment_mode
-import sys
 import os
-import time
+import sys
+
 import pyperclip
-from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QUrl
 from PyQt5.QtCore import Qt
-from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QMainWindow
+
+from wereader import USERVID, headers, get_bookmarklist, print_chapterUid_and_title, login_success, \
+    get_mythought, get_bestbookmarks, get_sorted_chapters, set_chapter_level, get_bookinfo, get_new_content_bytime, \
+    get_new_content_byrange, print_books_as_tree, print_books_directly, get_comment, remove_all_bookmark, get_bookshelf,headers_p
 
 # 微信读书用户id
 USERVID = 0
 # 文件路径
-file=''
+file = ''
 cookie_file = os.getcwd() + "\\temp\\cookie.txt"
 """追加内容到文件"""
+
+
 def push_to_file(res):
     global file
     if file == '':
-        file = input('请输入文件路径，内容将会追加到该文件中：').replace('\\','\\\\')
+        file = input('请输入文件路径，内容将会追加到该文件中：').replace('\\', '\\\\')
         if len(file) > 0 and os.path.exists(file) and os.path.isfile(file):
-            with open(file, 'a',encoding='utf-8') as f:
+            with open(file, 'a', encoding='utf-8') as f:
                 f.write(res)
                 print('push完成')
         elif file != '':
@@ -52,50 +54,59 @@ def push_to_file(res):
             file = ''
     elif len(file) > 0 and os.path.exists(file) and os.path.isfile(file):
         print('当前文件路径为：' + file)
-        with open(file, 'a',encoding='utf-8') as f:
+        with open(file, 'a', encoding='utf-8') as f:
             f.write(res)
             print('push完成')
 
+
 """输出内容并复制到剪切板"""
+
+
 def print_and_copy(res):
     if res != None:
         print(res)
         pyperclip.copy(res)
 
+
 """获取标注(md)"""
+
+
 def get_mark(bookId):
     res = ''
     is_print_all = input('选择：所有标注/指定章节的标注(1/2)?\n')
-    if is_print_all.strip() == '1':#如果选择输出所有标注
+    if is_print_all.strip() == '1':  # 如果选择输出所有标注
         way_to_print_chapter = input('选择：包含所有标题/只包含有标注的标题(1/2)?\n')
-        if way_to_print_chapter.strip() == '1':#如果选择输出所有标题
+        if way_to_print_chapter.strip() == '1':  # 如果选择输出所有标题
             res = get_bookmarklist(bookId)
-        elif way_to_print_chapter.strip() == '2':#如果选择只输出包含标注的标题
-            res = get_bookmarklist(bookId,is_all_chapter = 0)
+        elif way_to_print_chapter.strip() == '2':  # 如果选择只输出包含标注的标题
+            res = get_bookmarklist(bookId, is_all_chapter=0)
         else:
             print('其他指令，默认包含所有标题\n')
             res = get_bookmarklist(bookId)
-    elif is_print_all.strip() == '2':#如果选择输出指定章节的标注
-        #输出章节id和章节名
+    elif is_print_all.strip() == '2':  # 如果选择输出指定章节的标注
+        # 输出章节id和章节名
         print_chapterUid_and_title(bookId)
-        #接收章节id并去除空符
-        chapterUid_str = input('输入章节ID,多个ID用英文逗号分隔：\n').replace(' ','')
+        # 接收章节id并去除空符
+        chapterUid_str = input('输入章节ID,多个ID用英文逗号分隔：\n').replace(' ', '')
         print('获取中...')
-        #遍历所有章节id
+        # 遍历所有章节id
         for chapterUid_s in chapterUid_str.split(','):
             chapterUid = int(chapterUid_s)
-            res += get_bookmarklist(bookId,is_all_chapter = 1,chapterUid=chapterUid)
+            res += get_bookmarklist(bookId, is_all_chapter=1, chapterUid=chapterUid)
             print(chapterUid)
         print('获取结束')
     else:
         print('其他指令，默认返回所有标注\n')
         res = get_bookmarklist(bookId)
-    #没有标注时给出提示
+    # 没有标注时给出提示
     if res.strip() == '':
         print('无标注')
     return res
 
+
 """打印提示、返回输入"""
+
+
 def print_guide():
     print_choice = [
         '输出标注：print 1',
@@ -107,7 +118,7 @@ def print_guide():
         '按文档树输出书架中的书：print 7',
         '直接输出书架中的书：print 8',
         '输出评价：print 9'
-            ]
+    ]
     push_choice = [
         '推送标注：push 1',
         '推送想法：push 2',
@@ -116,14 +127,14 @@ def print_guide():
         '推送书本信息：push 5',
         '推送个人最新标注：push 6',
         '推送评价：push 7'
-            ]
+    ]
     setting_choice = [
         '重新设置书本ID：change id',
         '设置文件路径：change file',
         '设置新标注追加模式(按时间/按位置)：append mode',
         '设置评论输出模式(纯文本/html)：comment mode'
-            ]
-    #开始打印
+    ]
+    # 开始打印
     print('《' + bookId_dict[bookId] + '》')
     print('输入命令调用函数：')
     print('*******print*******')
@@ -140,14 +151,17 @@ def print_guide():
     y = input()
     return y
 
+
 """根据输入调用相应函数"""
+
+
 def main(bookId):
     global file
     global way_to_append
     global comment_mode
     while True:
-        #调用print_guide()函数提示输入并将输入返回
-        y = print_guide().replace(' ','').lower()
+        # 调用print_guide()函数提示输入并将输入返回
+        y = print_guide().replace(' ', '').lower()
         if y[:5] == 'print':
             if y == 'print1':
                 res = get_mark(bookId)
@@ -161,7 +175,7 @@ def main(bookId):
                 res = get_bestbookmarks(bookId)
                 print_and_copy(res)
                 print('**********************************************************')
-            elif y == 'print4':#输出目录
+            elif y == 'print4':  # 输出目录
                 res = ''
                 sorted_chapters = get_sorted_chapters(bookId)
                 for chapter in sorted_chapters:
@@ -175,8 +189,8 @@ def main(bookId):
             elif y == 'print6':
                 if way_to_append == '':
                     while True:
-                        mode = input('选择追加模式：按时间/按位置(1/2)?').replace(' ','')
-                        if mode in ['1','2']:
+                        mode = input('选择追加模式：按时间/按位置(1/2)?').replace(' ', '')
+                        if mode in ['1', '2']:
                             way_to_append = mode
                             break
                         else:
@@ -205,16 +219,16 @@ def main(bookId):
                 comment = ''
                 if comment_mode == '':
                     while True:
-                        mode = input('选择评论输出模式(纯文本/html)(1/2)?').replace(' ','')
-                        if mode in ['1','2']:
+                        mode = input('选择评论输出模式(纯文本/html)(1/2)?').replace(' ', '')
+                        if mode in ['1', '2']:
                             comment_mode = mode
                             break
                         else:
                             print('输入无效，重新输入')
                 if comment_mode == '1':
-                    comment = get_comment(bookId,mode = '1')
+                    comment = get_comment(bookId, mode='1')
                 elif comment_mode == '2':
-                    comment = get_comment(bookId,mode = '2')
+                    comment = get_comment(bookId, mode='2')
                 print_and_copy(comment)
                 print('**********************************************************')
         elif y[:4] == 'push':
@@ -243,17 +257,17 @@ def main(bookId):
                 print('**********************************************************')
             elif y == 'push6':
                 if way_to_append == '':
-                    way_to_append = input('选择追加模式：按时间/按位置(1/2)?').replace(' ','')
+                    way_to_append = input('选择追加模式：按时间/按位置(1/2)?').replace(' ', '')
                 elif way_to_append.strip() == '1':
                     line_and_res = get_new_content_bytime(bookId)
-                    #检查返回内容是否有效
+                    # 检查返回内容是否有效
                     if line_and_res[0] == '':
                         continue
                     print('将' + line_and_res[0] + '后的新内容push到文件')
                     push_to_file(line_and_res[1])
                 elif way_to_append.strip() == '2':
                     line_and_res = get_new_content_byrange(bookId)
-                    #检查返回内容是否有效
+                    # 检查返回内容是否有效
                     if line_and_res[0] == '':
                         continue
                     print('将' + line_and_res[0] + '后的新内容push到文件')
@@ -264,16 +278,16 @@ def main(bookId):
                 comment = ''
                 if comment_mode == '':
                     while True:
-                        mode = input('选择评论输出模式(纯文本/html)(1/2)?').replace(' ','')
-                        if mode in ['1','2']:
+                        mode = input('选择评论输出模式(纯文本/html)(1/2)?').replace(' ', '')
+                        if mode in ['1', '2']:
                             comment_mode = mode
                             break
                         else:
                             print('输入无效，重新输入')
                 if comment_mode == '1':
-                    comment = get_comment(bookId,mode = '1')
+                    comment = get_comment(bookId, mode='1')
                 elif comment_mode == '2':
-                    comment = get_comment(bookId,mode = '2')
+                    comment = get_comment(bookId, mode='2')
                 push_to_file(comment)
                 print('**********************************************************')
         elif y == 'removeall':
@@ -283,29 +297,30 @@ def main(bookId):
         elif y == 'changeid':
             return 1
         elif y == 'changefile':
-            f = input('请输入文件路径，内容将会追加到该文件中：').replace('\\','\\\\')
+            f = input('请输入文件路径，内容将会追加到该文件中：').replace('\\', '\\\\')
             if len(f) > 0 and os.path.exists(f) and os.path.isfile(f):
                 file = f
                 print('设置成功')
             else:
                 print('无效路径')
         elif y == 'appendmode':
-            mode = input('选择追加模式：按时间/按位置(1/2)?').replace(' ','')
-            if mode in ['1','2']:
+            mode = input('选择追加模式：按时间/按位置(1/2)?').replace(' ', '')
+            if mode in ['1', '2']:
                 way_to_append = mode
                 print('设置成功')
             else:
                 print('输入无效')
         elif y == 'commentmode':
-            mode = input('选择评论格式：纯文本/html(1/2)?').replace(' ','')
-            if mode in ['1','2']:
+            mode = input('选择评论格式：纯文本/html(1/2)?').replace(' ', '')
+            if mode in ['1', '2']:
                 comment_mode = mode
                 print('设置成功')
             else:
                 print('输入无效')
         else:
             print('输入无效')
-        
+
+
 class MainWindow(QMainWindow):
 
     def __init__(self, *args, **kwargs):
@@ -313,26 +328,22 @@ class MainWindow(QMainWindow):
 
         self.DomainCookies = {}
 
-        self.setWindowTitle('微信读书助手') # 设置窗口标题
-        self.resize(900, 600) # 设置窗口大小
-        self.setWindowFlags(Qt.WindowMinimizeButtonHint) # 禁止最大化按钮
-        self.setFixedSize(self.width(), self.height()) # 禁止调整窗口大小
+        self.setWindowTitle('微信读书助手')  # 设置窗口标题
+        self.resize(900, 600)  # 设置窗口大小
+        self.setWindowFlags(Qt.WindowMinimizeButtonHint)  # 禁止最大化按钮
+        self.setFixedSize(self.width(), self.height())  # 禁止调整窗口大小
 
-        url = 'https://weread.qq.com/#login' # 目标地址
-        self.browser = QWebEngineView() # 实例化浏览器对象
+        url = 'https://weread.qq.com/#login'  # 目标地址
+        self.browser = QWebEngineView()  # 实例化浏览器对象
 
         self.profile = QWebEngineProfile.defaultProfile()
-        self.profile.cookieStore().deleteAllCookies() # 初次运行软件时删除所有cookies
-        self.profile.cookieStore().cookieAdded.connect(self.onCookieAdd) # cookies增加时触发self.onCookieAdd()函数
+        self.profile.cookieStore().deleteAllCookies()  # 初次运行软件时删除所有cookies
+        self.profile.cookieStore().cookieAdded.connect(self.onCookieAdd)  # cookies增加时触发self.onCookieAdd()函数
 
-        self.browser.loadFinished.connect(self.onLoadFinished) # 网页加载完毕时触发self.onLoadFinished()函数
+        self.browser.loadFinished.connect(self.onLoadFinished)  # 网页加载完毕时触发self.onLoadFinished()函数
 
-        self.browser.load(QUrl(url)) # 加载网页
-        self.setCentralWidget(self.browser) # 设置中心窗口
-
-
-
-
+        self.browser.load(QUrl(url))  # 加载网页
+        self.setCentralWidget(self.browser)  # 设置中心窗口
 
     # 网页加载完毕事件
     def onLoadFinished(self):
@@ -342,19 +353,19 @@ class MainWindow(QMainWindow):
         global headers_p
 
         # 获取cookies
-        cookies = ['{}={};'.format(key, value) for key,value in self.DomainCookies.items()]
+        cookies = ['{}={};'.format(key, value) for key, value in self.DomainCookies.items()]
         cookies = ' '.join(cookies)
         # 添加Cookie到header
         headers.update(Cookie=cookies)
         headers_p.update(Cookie=cookies)
         # 判断是否成功登录微信读书
         if login_success(headers):
-            #判断temp文件夹是否存在，不存在则创建
+            # 判断temp文件夹是否存在，不存在则创建
             temp_dir = os.getcwd() + "\\temp"
             if not os.path.exists(temp_dir):
                 os.makedirs(temp_dir)
-            #登录成功后写入cookie
-            with open(cookie_file, 'w',encoding='utf-8') as f:
+            # 登录成功后写入cookie
+            with open(cookie_file, 'w', encoding='utf-8') as f:
                 f.write(cookies)
             print('登录微信读书成功!')
             # 获取用户user_vid
@@ -368,9 +379,6 @@ class MainWindow(QMainWindow):
             self.profile.cookieStore().deleteAllCookies()
             print('请扫描二维码登录微信读书...')
 
-
-
-
     # 添加cookies事件
     def onCookieAdd(self, cookie):
         if 'weread.qq.com' in cookie.domain():
@@ -378,9 +386,6 @@ class MainWindow(QMainWindow):
             value = cookie.value().data().decode('utf-8')
             if name not in self.DomainCookies:
                 self.DomainCookies.update({name: value})
-
-
-
 
     # 窗口关闭事件
     def closeEvent(self, event):
@@ -393,43 +398,43 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('退出中……')  # 设置窗口标题
         self.profile.cookieStore().deleteAllCookies()
 
-if __name__=='__main__':
-    #cookie文件存在时尝试从文件中读取cookie登录
+
+if __name__ == '__main__':
+    # cookie文件存在时尝试从文件中读取cookie登录
     if os.path.exists(cookie_file) and os.path.isfile(cookie_file):
-        #读取
-        with open(cookie_file,'r',encoding='utf-8') as f:
+        # 读取
+        with open(cookie_file, 'r', encoding='utf-8') as f:
             cookie_in_file = f.readlines()
-        #尝试登陆
+        # 尝试登陆
         headers_from_file = headers
         headers_from_file.update(Cookie=cookie_in_file[0])
         if login_success(headers_from_file):
             print('登录微信读书成功!')
-            #登录成后更新headers
+            # 登录成后更新headers
             headers = headers_from_file
             headers_p.update(Cookie=cookie_in_file[0])
-            #获取用户user_vid
+            # 获取用户user_vid
             for item in cookie_in_file[0].split(';'):
                 if item.strip()[:6] == 'wr_vid':
                     USERVID = int(item.strip()[7:])
         else:
-            app = QApplication(sys.argv) # 创建应用
-            window = MainWindow() # 创建主窗口
-            window.show() # 显示窗口
-            app.exec_() # 运行应用，并监听事件
-    #文件不存在时再启用登录界面
+            app = QApplication(sys.argv)  # 创建应用
+            window = MainWindow()  # 创建主窗口
+            window.show()  # 显示窗口
+            app.exec_()  # 运行应用，并监听事件
+    # 文件不存在时再启用登录界面
     else:
-        app = QApplication(sys.argv) # 创建应用
-        window = MainWindow() # 创建主窗口
-        window.show() # 显示窗口
-        app.exec_() # 运行应用，并监听事件
-    
-    
-    #将书架按{'bookId1':"title1"...}的形式储存在字典中
-    bookId_dict = get_bookshelf(userVid=USERVID,list_as_shelf = False)
+        app = QApplication(sys.argv)  # 创建应用
+        window = MainWindow()  # 创建主窗口
+        window.show()  # 显示窗口
+        app.exec_()  # 运行应用，并监听事件
+
+    # 将书架按{'bookId1':"title1"...}的形式储存在字典中
+    bookId_dict = get_bookshelf(userVid=USERVID, list_as_shelf=False)
     print('**********************************************************')
     while True:
         print_books_as_tree(userVid=USERVID)
-        #提示输入书本id，正确输入后进入主函数
+        # 提示输入书本id，正确输入后进入主函数
         bookId = input('请输入书本ID：\n').strip()
         if bookId in bookId_dict.keys():
             y = main(bookId)
