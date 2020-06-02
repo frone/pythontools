@@ -43,8 +43,16 @@ python main.py
 ## 补充说明
 ### .gitignore 不生效
 .gitignore只能忽略那些原来没有被track的文件，如果某些文件已经被纳入了版本管理中，则修改.gitignore是无效的
-```
+```shell script
 git rm -r --cached .
 git add .
 git commit -m 'update .gitignore'
 ```
+
+### 导出项目依赖文件
+```shell script
+pip install pipreqs
+pipreqs ./
+等待一会就会生成一个 requirements.txt  文件
+```
+
