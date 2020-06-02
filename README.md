@@ -52,7 +52,7 @@ git commit -m 'update .gitignore'
 ### 导出项目依赖文件
 ```shell script
 pip install pipreqs
-pipreqs ./
+pipreqs ./ --encoding=utf8
 等待一会就会生成一个 requirements.txt  文件
 ```
 
