@@ -11,6 +11,7 @@ level3 = '#### '  # 三级标题
 style1 = {'pre': "", 'suf': ""}  # (微信读书)红色下划线
 style2 = {'pre': "**", 'suf': "**"}  # 橙色背景色
 style3 = {'pre': "", 'suf': ""}  # 蓝色波浪线
+quote = '> '
 thought_style = {'pre': "```\n", 'suf': "\n```"}  # 想法前后缀
 hotmarks_number = {'pre': "`", 'suf': "`  "}  # 热门标注标注人数前后缀
 way_to_append = ''
@@ -47,7 +48,8 @@ def set_content_style(style, text):
     if style == 0:  # 红色下划线
         return style1['pre'] + text.strip() + style1['suf']
     elif style == 1:  # 橙色背景色
-        return style2['pre'] + text.strip() + style2['suf']
+        return quote + text.strip()
+        # return style2['pre'] + text.strip() + style2['suf']
     elif style == 2:  # 蓝色波浪线
         return style3['pre'] + text.strip() + style3['suf']
 
@@ -77,7 +79,6 @@ def set_hotmarks_number(number):
 
 def request_data(url):
     global headers
-    print(headers)
     r = requests.get(url, headers=headers, verify=False)
     if r.ok:
         data = r.json()
@@ -649,6 +650,7 @@ def get_new_content_byrange(bookId):
         # 获取章节、标注
         sorted_chapters = get_sorted_chapters(bookId)
         sorted_contents = get_sorted_contents_from_data(data)
+        print(sorted_contents)
         # 去除没有标注的目录项
         d_sorted_chapters = []
         for chapter in sorted_chapters:
@@ -730,7 +732,10 @@ if __name__ == '__main__':
         # 尝试登陆
         headers_from_file = headers
         headers_from_file.update(Cookie=cookie_in_file[0])
-    print(get_bookmarklist('25469762'))
+    # print(get_bookmarklist('25469762'))
+
+    with open('导出笔记\副业赚钱.md', 'w', encoding='utf-8') as f:
+        f.write(get_bookmarklist('25469762'))
     # print(get_bestbookmarks('25469762'))
     # books = get_notebooklist()
     # for b in books:
